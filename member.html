@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Sổ Tay Dùng Thuốc</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#e67e22">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f6f9;
+      margin: 0;
+      padding: 0;
+    }
+    header {
+      text-align: center;
+      padding: 20px;
+      background-color: #fff;
+      border-bottom: 2px solid #eee;
+    }
+    header h1 {
+      color: #007BFF;
+      margin: 0;
+      font-size: 22px;
+    }
+    .ribbon {
+      background-color: #d35400;
+      color: white;
+      text-align: center;
+      padding: 10px;
+    }
+    .container {
+      padding: 20px;
+      max-width: 960px;
+      margin: auto;
+    }
+    .btn {
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      font-size: 16px;
+      cursor: pointer;
+      border-radius: 6px;
+      margin-top: 15px;
+      user-select: none;
+    }
+    .btn:hover {
+      background-color: #cf711f;
+    }
+    .entry {
+      background: #fff;
+      padding: 15px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      box-shadow: 0 0 5px #ccc;
+    }
+    textarea, input, select {
+      width: 100%;
+      padding: 8px;
+      margin: 5px 0 15px;
+      font-size: 14px;
+      box-sizing: border-box;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 15px;
+      table-layout: fixed;
+      word-wrap: break-word;
+    }
+    table, th, td {
+      border: 1px solid #ccc;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+      vertical-align: top;
+    }
+    .thuoc-ten {
+      width: 180px;
+    }
+    .lieu-dung {
+      width: 100px;
+    }
+    .nho {
+      width: 60px;
+    }
+    .luu-y {
+      text-align: left;
+      padding-left: 10px;
+      white-space: pre-wrap;
+    }
+    .action-btn {
+      cursor: pointer;
+      color: red;
+      font-weight: bold;
+      font-size: 18px;
+      user-select: none;
+      border: none;
+      background: transparent;
+      padding: 0 5px;
+    }
+    footer {
+      text-align: center;
+      font-size: 13px;
+      color: #666;
+      margin-top: 40px;
+      padding: 20px;
+      border-top: 1px solid #ccc;
+    }
+@media screen and (max-width: 600px) {
+  body {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .container {
+    padding: 15px;
+  }
+
+  input, select, textarea {
+    font-size: 16px;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  table th, table td {
+    font-size: 14px;
+    padding: 6px;
+  }
+
+  .entry h3 {
+    font-size: 18px;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <header><h1>SỔ TAY DÙNG THUỐC</h1></header>
+  <div class="ribbon">
+    <a href="index.html" style="color:white;">🏠 Về Trang Chủ</a>
+  </div>
+
+  <div class="container">
+    <h2 id="memberTitle">Thông tin thành viên</h2>
+    <div id="entriesContainer"></div>
+    <button class="btn" onclick="addEntry()">➕ Thêm Nhật Ký</button>
+    <button class="btn" onclick="exportExcel()">📤 Xuất Excel</button>
+  </div>
+
+  <footer>
+    Tác giả: Ds. Nguyễn Lê Xuân Thu – ChatGPT (OpenAI)
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  <script>
+    const params = new URLSearchParams(window.location.search);
+    const memberId = params.get("member");
+    const STORAGE_KEY = "entries_by_member";
+    const entriesContainer = document.getElementById("entriesContainer");
+
+    if (!memberId) {
+      alert("❗ Vui lòng truy cập qua liên kết chứa ?member=ID");
+      throw new Error("Thiếu member ID");
+    }
+
+    function addEntry(values = []) {
+      const div = document.createElement('div');
+      div.className = 'entry';
+
+      div.innerHTML = `
+        <h3>🩺 Nhật ký mới</h3>
+        Triệu chứng bệnh hiện tại:<br><textarea rows="3"></textarea><br>
+        *Có bệnh nền không?<br><input type="text" /><br>
+        Số đo chiều cao (cm): <input type="number" /><br>
+        Cân nặng (kg): <input type="number" /><br>
+        Huyết áp: <input type="text" /><br>
+        Nồng độ oxy máu (%): <input type="text" /><br>
+        Ngày khám: <input type="date" /><br>
+        Cách chữa trị: 
+        <select>
+          <option>Nhà thuốc</option>
+          <option>Phòng khám tư</option>
+          <option>Bệnh viện</option>
+          <option>Thuốc còn ở nhà</option>
+        </select><br>
+        Cơ sở cấp thuốc: <input type="text" /><br>
+        Tên chuyên gia y tế: <input type="text" /><br>
+
+        <table>
+          <thead>
+            <tr>
+              <th>STT</th>
+              <th class="thuoc-ten">Tên thuốc</th>
+              <th class="lieu-dung">Liều/ngày</th>
+              <th class="nho">Sáng</th>
+              <th class="nho">Trưa</th>
+              <th class="nho">Chiều</th>
+              <th class="nho">Tối</th>
+              <th>Lưu ý</th>
+              <th>❌</th>
+            </tr>
+          </thead>
+          <tbody class="thuoc-body">
+            ${generateMedicineRow(1)}
+          </tbody>
+        </table>
+        <button class="btn" onclick="addMedicineRow(this)">➕ Thêm hàng mới</button>
+        <button class="btn" onclick="saveSingleEntry(this)">💾 Lưu nhật ký</button>
+      `;
+
+      entriesContainer.appendChild(div);
+
+      for (let i = 0; i < 4; i++) {
+        addMedicineRow(div.querySelector('button.btn'));
+      }
+
+      if (values.length) {
+        const inputs = div.querySelectorAll('input, textarea, select');
+        inputs.forEach((inp, i) => inp.value = values[i] || '');
+      }
+    }
+
+    function generateMedicineRow(index) {
+      return `
+        <tr>
+          <td>${index}</td>
+          <td><input type="text" class="thuoc-ten" /></td>
+          <td><input type="text" class="lieu-dung" /></td>
+          <td><input type="text" class="nho" /></td>
+          <td><input type="text" class="nho" /></td>
+          <td><input type="text" class="nho" /></td>
+          <td><input type="text" class="nho" /></td>
+          <td><textarea rows="2" class="luu-y"></textarea></td>
+          <td><button class="action-btn" onclick="removeMedicineRow(this)">❌</button></td>
+        </tr>
+      `;
+    }
+
+    function addMedicineRow(button) {
+      const entryDiv = button.closest('.entry');
+      const tbody = entryDiv.querySelector('.thuoc-body');
+      const rowCount = tbody.rows.length + 1;
+
+      const newRow = document.createElement('tr');
+      newRow.innerHTML = generateMedicineRow(rowCount);
+      tbody.appendChild(newRow);
+      updateMedicineRowNumbers(tbody);
+    }
+
+    function removeMedicineRow(button) {
+      const row = button.closest('tr');
+      const tbody = row.parentElement;
+      if (tbody.rows.length === 1) {
+        alert("Phải có ít nhất 1 dòng thuốc.");
+        return;
+      }
+      row.remove();
+      updateMedicineRowNumbers(tbody);
+    }
+
+    function updateMedicineRowNumbers(tbody) {
+      [...tbody.rows].forEach((row, index) => {
+        row.cells[0].textContent = index + 1;
+      });
+    }
+
+    function saveSingleEntry(button) {
+      const entryDiv = button.closest('.entry');
+      const inputs = entryDiv.querySelectorAll('input, textarea, select');
+      const entryData = [];
+      inputs.forEach(inp => entryData.push(inp.value));
+
+      const allEntries = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const memberKey = `member_${memberId}`;
+      const entriesForMember = allEntries[memberKey] || [];
+
+      const index = [...entriesContainer.children].indexOf(entryDiv);
+      entriesForMember[index] = entryData;
+      allEntries[memberKey] = entriesForMember;
+
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(allEntries));
+      alert("✅ Đã lưu nhật ký thành công!");
+    }
+
+    function exportExcel() {
+      const wb = XLSX.utils.book_new();
+      const ws_data = [];
+
+      const entries = document.querySelectorAll('.entry');
+      entries.forEach((entry, i) => {
+        const symptoms = entry.querySelector('textarea').value.trim();
+        const inputs = entry.querySelectorAll('input');
+        const selects = entry.querySelectorAll('select');
+
+        const [
+          coBenhNen, chieuCao, canNang,
+          huyetAp, oxy, ngayKham,
+          coSoCapThuoc, chuyenGia
+        ] = Array.from(inputs).map(i => i.value.trim()).slice(0, 8);
+        const cachChuaTri = selects[0].value;
+
+        const tbody = entry.querySelector('.thuoc-body');
+        const rows = [...tbody.rows];
+
+        if (i === 0) {
+          ws_data.push([
+            "Nhật ký", "Triệu chứng", "Bệnh nền", "Chiều cao", "Cân nặng",
+            "Huyết áp", "Oxy máu", "Ngày khám", "Cách chữa trị",
+            "Cơ sở cấp thuốc", "Chuyên gia y tế",
+            "STT", "Tên thuốc", "Liều", "Sáng", "Trưa", "Chiều", "Tối", "Lưu ý"
+          ]);
+        }
+
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('input, textarea');
+          ws_data.push([
+            i + 1, symptoms, coBenhNen, chieuCao, canNang,
+            huyetAp, oxy, ngayKham, cachChuaTri, coSoCapThuoc, chuyenGia,
+            row.cells[0].textContent,
+            cells[0].value, cells[1].value, cells[2].value, cells[3].value,
+            cells[4].value, cells[5].value, cells[6].value
+          ]);
+        });
+      });
+
+      const ws = XLSX.utils.aoa_to_sheet(ws_data);
+      XLSX.utils.book_append_sheet(wb, ws, `Member_${memberId}`);
+      XLSX.writeFile(wb, `so_tay_thanh_vien_${memberId}.xlsx`);
+    }
+
+    function loadEntriesFromStorage() {
+      const allData = JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}');
+      const data = allData[`member_${memberId}`] || [];
+      data.forEach(entry => addEntry(entry));
+    }
+
+    window.onload = function () {
+      const memData = localStorage.getItem(`mem${memberId}`);
+      if (memData) {
+        const mem = JSON.parse(memData);
+        document.getElementById("memberTitle").textContent =
+          `Sổ tay dùng thuốc của ${mem.title.toUpperCase()} ${mem.name.toUpperCase()}`;
+      }
+      loadEntriesFromStorage();
+    };
+  </script>
+</body>
+</html>

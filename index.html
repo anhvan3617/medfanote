@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Nhật Ký Điện Tử Gia Đình</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<meta name="theme-color" content="#e67e22">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f3f3 url('tree-background.png') no-repeat center center fixed;
+      background-size: cover;
+      margin: 0;
+      padding: 0;
+    }
+
+    .container {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #ffffffdd;
+    }
+
+    .title-blue {
+      color: #007BFF;
+      text-align: center;
+      font-size: 30px;
+      margin-bottom: 5px;
+    }
+
+    .title-orange {
+      color: #d35400;
+      text-align: center;
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 10px;
+    }
+
+    .subnote {
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+      margin-bottom: 30px;
+    }
+
+    .member-box {
+      border: 2px solid #8e5c2e;
+      padding: 20px;
+      margin-bottom: 20px;
+      border-radius: 10px;
+      background: #fff;
+      position: relative;
+    }
+
+    .member-box label {
+      display: block;
+      margin-top: 10px;
+      font-weight: bold;
+    }
+
+    .member-box input,
+    .member-box select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+      font-size: 16px;
+    }
+
+    .btn {
+      background: #e67e22;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 15px;
+      font-size: 16px;
+    }
+
+    .btn:hover {
+      background: #d35400;
+    }
+
+    .output-link {
+      margin-top: 10px;
+      display: block;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+      padding: 20px;
+      margin-top: 40px;
+      border-top: 1px solid #ccc;
+    }
+
+    /* Modal styles */
+    #welcomeModal {
+      display: block;
+      position: fixed;
+      z-index: 9999;
+      left: 0;
+      top: 0;
+      width: 100%;
+      height: 100%;
+      overflow: auto;
+      background-color: rgba(0,0,0,0.5);
+    }
+
+    #welcomeModalContent {
+      background-color: #fff;
+      margin: 15% auto;
+      padding: 30px;
+      border-radius: 10px;
+      width: 90%;
+      max-width: 400px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+      text-align: center;
+    }
+
+    #welcomeModalContent p {
+      font-size: 18px;
+      color: #333;
+      margin-bottom: 25px;
+    }
+
+    #welcomeModalContent button {
+      background-color: #e67e22;
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 6px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
+    #welcomeModalContent button:hover {
+      background-color: #d35400;
+    }
+
+@media screen and (max-width: 600px) {
+  body {
+    font-size: 16px;
+    padding: 10px;
+  }
+
+  .container {
+    padding: 15px;
+  }
+
+  input, select, textarea {
+    font-size: 16px;
+  }
+
+  .btn {
+    width: 100%;
+    margin-bottom: 10px;
+  }
+
+  table th, table td {
+    font-size: 14px;
+    padding: 6px;
+  }
+
+  .entry h3 {
+    font-size: 18px;
+  }
+}
+
+  </style>
+</head>
+<body>
+  <div id="welcomeModal">
+    <div id="welcomeModalContent">
+      <p>Chào mừng bạn đến với <strong>Sổ Tay Sử Dụng Thuốc Gia Đình</strong></p>
+      <button onclick="closeWelcomeModal()">OK</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 class="title-blue">Nhật Ký Điện Tử</h1>
+    <h2 class="title-orange">Sổ Tay Sử Dụng Thuốc Gia Đình</h2>
+    <p class="subnote">Phát triển bởi Ds. Nguyễn Lê Xuân Thu và AI – ChatGPT</p>
+    <div id="membersContainer"></div>
+    <button class="btn" onclick="addMember()">➕ Thêm thành viên</button>
+  </div>
+
+  <footer>
+    Tác giả: Ds. Nguyễn Lê Xuân Thu<br />
+    Phối hợp công nghệ: AI – ChatGPT (OpenAI)<br />
+    Liên hệ: 0946561648
+  </footer>
+<script>
+  function closeWelcomeModal() {
+    document.getElementById('welcomeModal').style.display = 'none';
+  }
+
+  const danhSachChucDanh = [ "Tôi", "Ông nội", "Bà nội", "Ông ngoại", "Bà ngoại", "Bố", "Mẹ", "Chồng", "Vợ", "Con1", "Con2", "Anh", "Chị", "Em" ];
+  let memberCount = 0;
+
+  function addMember(existingData = null) {
+    memberCount++;
+    const container = document.getElementById("membersContainer");
+    const box = document.createElement("div");
+    box.className = "member-box";
+    box.id = `member-${memberCount}`;
+
+    const selected = d => existingData && existingData.title === d ? 'selected' : '';
+    box.innerHTML = `
+      <h3>🧍 Thành viên ${memberCount}</h3>
+      <label>Chức danh:</label>
+      <select id="title-${memberCount}">
+        <option value="">-- Chọn chức danh --</option>
+        ${danhSachChucDanh.map(d => `<option value="${d}" ${selected(d)}>${d}</option>`).join('')}
+      </select>
+      <label>Họ và tên:</label>
+      <input type="text" id="name-${memberCount}" value="${existingData ? existingData.name : ''}">
+      <label>Năm sinh:</label>
+      <input type="number" id="birth-${memberCount}" value="${existingData ? existingData.birth : ''}">
+      <button class="btn" onclick="saveMember(${memberCount})">💾 Lưu & Mở Sổ Tay</button>
+      <button class="btn" style="background-color:#c0392b;" onclick="deleteMember(${memberCount})">🗑️ Xóa sổ tay</button>
+      <div class="output-link" id="link-${memberCount}">${existingData ? 
+        `<a href="member.html?member=${memberCount}" target="_blank" class="btn">🔗 Mở Sổ Tay (${existingData.name} – ${existingData.age} tuổi)</a>` 
+        : ''}</div>
+    `;
+    container.appendChild(box);
+  }
+
+  function saveMember(index) {
+    const title = document.getElementById(`title-${index}`).value;
+    const name = document.getElementById(`name-${index}`).value.trim();
+    const birth = document.getElementById(`birth-${index}`).value.trim();
+    if (!title || !name || !birth) {
+      alert("Vui lòng nhập đầy đủ thông tin.");
+      return;
+    }
+    const age = new Date().getFullYear() - parseInt(birth);
+    const data = { title, name, birth, age };
+    localStorage.setItem(`mem${index}`, JSON.stringify(data));
+
+    const linkDiv = document.getElementById(`link-${index}`);
+    linkDiv.innerHTML = `<a href="member.html?member=${index}" target="_blank" class="btn">🔗 Mở Sổ Tay (${name} – ${age} tuổi)</a>`;
+  }
+
+  function deleteMember(index) {
+    if (!confirm("Bạn có chắc chắn muốn xóa toàn bộ dữ liệu sổ tay này không?")) return;
+
+    // Xóa dữ liệu thành viên và nhật ký
+    localStorage.removeItem(`mem${index}`);
+
+    const allEntries = JSON.parse(localStorage.getItem("entries_by_member") || "{}");
+    delete allEntries[`member_${index}`];
+    localStorage.setItem("entries_by_member", JSON.stringify(allEntries));
+
+    const box = document.getElementById(`member-${index}`);
+    if (box) box.remove();
+  }
+
+  function loadSavedMembers() {
+    let i = 1;
+    while (true) {
+      const item = localStorage.getItem(`mem${i}`);
+      if (!item) break;
+      const data = JSON.parse(item);
+      addMember(data);
+      i++;
+    }
+  }
+
+  window.onload = function () {
+    closeWelcomeModal();
+    loadSavedMembers();
+  };
+</script>
+
+</body>
+</html>
